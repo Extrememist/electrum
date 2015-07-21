@@ -226,6 +226,7 @@ class Interface:
         # Set last ping to zero to ensure immediate ping
         self.last_request = time.time()
         self.last_ping = 0
+        self.closed_remotely = False
 
     def print_error(self, *msg):
         util.print_error("[%s]" % self.host, *msg)
@@ -235,7 +236,8 @@ class Interface:
         return self.socket.fileno()
 
     def close(self):
-        self.socket.shutdown(socket.SHUT_RDWR)
+        if not self.closed_remotely:
+            self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
 
     def queue_request(self, request):
@@ -302,6 +304,7 @@ class Interface:
                 break
             if response is None:
                 notifications.append(None)
+                self.closed_remotely = True
                 self.print_error("connection closed remotely")
                 break
             if self.debug:
